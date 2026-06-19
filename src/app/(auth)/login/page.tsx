@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
+import { getPortalForRole } from '@/lib/portals';
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -12,8 +13,16 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = '/dashboard';
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      window.location.href = getPortalForRole(profile?.role).homePath;
     });
   }, []);
 
@@ -30,10 +39,9 @@ export default function LoginPage() {
       return;
     }
 
-    // Check admin role
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, is_banned')
       .eq('id', data.user.id)
       .single();
 
@@ -44,14 +52,14 @@ export default function LoginPage() {
       return;
     }
 
-    if (profile?.role !== 'admin') {
-      setError(`Access denied. Your role is "${profile?.role ?? 'none'}" — admin required.`);
+    if (profile?.is_banned) {
+      setError('This account has been disabled. Contact support if you think this is a mistake.');
       setLoading(false);
       await supabase.auth.signOut();
       return;
     }
 
-    window.location.href = '/dashboard';
+    window.location.href = getPortalForRole(profile?.role).homePath;
   }
 
   return (
@@ -61,8 +69,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-gradient mb-4">
             <span className="text-2xl font-bold font-display text-white">V</span>
           </div>
-          <h1 className="text-3xl font-display font-bold text-white">Vault Admin</h1>
-          <p className="text-vault-textSecondary mt-1">Sign in to manage your platform</p>
+          <h1 className="text-3xl font-display font-bold text-white">Vault Portal</h1>
+          <p className="text-vault-textSecondary mt-1">Sign in to continue to your workspace</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-vault-card rounded-2xl p-8 border border-vault-border space-y-5">

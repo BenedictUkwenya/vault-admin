@@ -20,7 +20,7 @@ interface User {
   created_at: string;
 }
 
-type RoleFilter = 'all' | 'user' | 'business' | 'admin';
+type RoleFilter = 'all' | 'user' | 'business' | 'ambassador' | 'admin' | 'super_admin';
 type TierFilter = 'all' | 'free' | 'paid';
 
 export default function UsersPage() {
@@ -83,10 +83,10 @@ export default function UsersPage() {
           />
         </div>
         <div className="flex gap-2">
-          {(['all', 'user', 'business', 'admin'] as RoleFilter[]).map((r) => (
+          {(['all', 'user', 'business', 'ambassador', 'admin', 'super_admin'] as RoleFilter[]).map((r) => (
             <button key={r} onClick={() => setRoleFilter(r)}
               className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors ${roleFilter === r ? 'bg-vault-primary text-white' : 'bg-vault-card border border-vault-border text-vault-textSecondary hover:text-white'}`}>
-              {r.charAt(0).toUpperCase() + r.slice(1)}
+              {r === 'super_admin' ? 'Super Admin' : r.charAt(0).toUpperCase() + r.slice(1)}
             </button>
           ))}
         </div>
@@ -133,10 +133,12 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      u.role === 'super_admin' ? 'bg-amber-500/20 text-amber-400' :
                       u.role === 'admin' ? 'bg-purple-500/20 text-purple-400' :
                       u.role === 'business' ? 'bg-blue-500/20 text-blue-400' :
+                      u.role === 'ambassador' ? 'bg-green-500/20 text-green-400' :
                       'bg-vault-elevated text-vault-textSecondary'}`}>
-                      {u.role}
+                      {u.role === 'super_admin' ? 'super admin' : u.role}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -204,13 +206,13 @@ export default function UsersPage() {
             <div className="space-y-3 pt-2">
               <p className="text-vault-textSecondary text-xs font-medium uppercase tracking-wider">Change Role</p>
               <div className="flex gap-2 flex-wrap">
-                {(['user', 'business', 'admin'] as const).map((r) => (
+                {(['user', 'business', 'ambassador', 'admin', 'super_admin'] as const).map((r) => (
                   <button key={r} onClick={() => changeRole(selectedUser.id, r)}
                     disabled={selectedUser.role === r}
                     className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl font-medium transition-colors ${
                       selectedUser.role === r ? 'bg-vault-primary text-white' : 'bg-vault-elevated text-vault-textSecondary hover:text-white'}`}>
                     <UserCog className="w-3.5 h-3.5" />
-                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                    {r === 'super_admin' ? 'Super Admin' : r.charAt(0).toUpperCase() + r.slice(1)}
                   </button>
                 ))}
               </div>

@@ -2,28 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard, Users, Building2, Tag, CreditCard, BarChart2, Bell,
-  BookOpen, GitBranch, MessageSquare, Layers,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { portalConfigs, type PortalKey } from '@/lib/portals';
 
-const nav = [
-  { href: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/users',          icon: Users,            label: 'Users' },
-  { href: '/businesses',     icon: Building2,        label: 'Businesses' },
-  { href: '/deals',          icon: Tag,              label: 'Deals' },
-  { href: '/bookings',       icon: BookOpen,         label: 'Bookings' },
-  { href: '/subscriptions',  icon: CreditCard,       label: 'Subscriptions' },
-  { href: '/referrals',      icon: GitBranch,        label: 'Referrals' },
-  { href: '/content',        icon: Layers,           label: 'Content' },
-  { href: '/analytics',      icon: BarChart2,        label: 'Analytics' },
-  { href: '/notifications',  icon: Bell,             label: 'Notifications' },
-  { href: '/feedback',       icon: MessageSquare,    label: 'Feedback' },
-];
+type SidebarProps = {
+  portal?: PortalKey;
+};
 
-export default function Sidebar() {
+export default function Sidebar({ portal = 'admin' }: SidebarProps) {
   const pathname = usePathname();
+  const config = portalConfigs[portal];
 
   return (
     <aside className="w-60 shrink-0 bg-vault-surface border-r border-vault-border flex flex-col">
@@ -33,15 +21,15 @@ export default function Sidebar() {
           <span className="text-white font-display font-bold text-sm">V</span>
         </div>
         <div>
-          <p className="font-display font-bold text-white text-sm">Vault Admin</p>
-          <p className="text-vault-textHint text-xs">Management Panel</p>
+          <p className="font-display font-bold text-white text-sm">{config.title}</p>
+          <p className="text-vault-textHint text-xs">{config.subtitle}</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {nav.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+        {config.nav.map(({ href, icon: Icon, label }) => {
+          const active = pathname === href || (href !== config.homePath && pathname.startsWith(href));
           return (
             <Link
               key={href}

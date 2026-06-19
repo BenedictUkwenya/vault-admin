@@ -15,7 +15,7 @@ export default function RecentBusinesses({ businesses }: { businesses: Business[
     <div className="bg-vault-card rounded-2xl border border-vault-border p-5 h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold text-white">Pending Approval</h3>
-        <Link href="/businesses" className="text-vault-primary text-xs hover:underline">View all</Link>
+        <Link href="/admin/businesses" className="text-vault-primary text-xs hover:underline">View all</Link>
       </div>
 
       {businesses.length === 0 ? (

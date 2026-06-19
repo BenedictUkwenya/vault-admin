@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
+import { canAccessPortal, getPortalForRole, type PortalKey } from '@/lib/portals';
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+type AuthGuardProps = {
+  portal: PortalKey;
+  children: React.ReactNode;
+};
+
+export default function AuthGuard({ portal, children }: AuthGuardProps) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -17,19 +23,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_banned')
         .eq('id', session.user.id)
         .single();
 
-      if (profile?.role !== 'admin') {
+      if (profile?.is_banned) {
         await supabase.auth.signOut();
         window.location.replace('/login');
         return;
       }
 
+      const role = profile?.role;
+      if (!canAccessPortal(role, portal)) {
+        window.location.replace(getPortalForRole(role).homePath);
+        return;
+      }
+
       setReady(true);
     });
-  }, []);
+  }, [portal]);
 
   if (!ready) {
     return (
