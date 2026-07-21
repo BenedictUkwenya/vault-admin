@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
+import { adminApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { Trash2, Star, GraduationCap, Search } from 'lucide-react';
 
@@ -20,7 +21,7 @@ interface Deal {
   created_at: string;
 }
 
-type StatusFilter = 'all' | 'active' | 'inactive' | 'college' | 'this_week';
+type StatusFilter = 'all' | 'active' | 'inactive' | 'pending' | 'college' | 'this_week';
 
 export default function DealsPage() {
   const supabase = createClient();
@@ -37,6 +38,7 @@ export default function DealsPage() {
     if (search) query = query.or(`title.ilike.%${search}%,business_name.ilike.%${search}%`);
     if (statusFilter === 'active') query = query.eq('is_active', true);
     if (statusFilter === 'inactive') query = query.eq('is_active', false);
+    if (statusFilter === 'pending') query = query.eq('is_active', false);
     if (statusFilter === 'college') query = query.eq('is_college_deal', true);
     if (statusFilter === 'this_week') query = query.eq('is_deal_of_week', true);
     const { data } = await query;
@@ -45,7 +47,11 @@ export default function DealsPage() {
   }
 
   async function toggleActive(id: string, current: boolean) {
-    await supabase.from('deals').update({ is_active: !current }).eq('id', id);
+    if (!current) {
+      try { await adminApi.approveDeal(id); } catch { await supabase.from('deals').update({ is_active: true }).eq('id', id); }
+    } else {
+      try { await adminApi.rejectDeal(id); } catch { await supabase.from('deals').update({ is_active: false }).eq('id', id); }
+    }
     fetchDeals();
   }
 
@@ -61,12 +67,12 @@ export default function DealsPage() {
 
   async function deleteDeal(id: string) {
     if (!confirm('Delete this deal permanently?')) return;
-    await supabase.from('deals').delete().eq('id', id);
+    try { await adminApi.deleteDeal(id); } catch { await supabase.from('deals').delete().eq('id', id); }
     fetchDeals();
   }
 
   const filterLabels: Record<StatusFilter, string> = {
-    all: 'All', active: 'Active', inactive: 'Inactive', college: 'College', this_week: 'Deal of Week',
+    all: 'All', active: 'Active', inactive: 'Inactive', pending: 'Pending Review', college: 'College', this_week: 'Deal of Week',
   };
 
   return (

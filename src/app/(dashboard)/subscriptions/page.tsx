@@ -3,6 +3,7 @@ import { formatDate } from '@/lib/utils';
 
 export default async function SubscriptionsPage() {
   const supabase = createServerClient();
+  const stripeUrl = process.env.NEXT_PUBLIC_STRIPE_DASHBOARD_URL || 'https://dashboard.stripe.com';
 
   const { data: subscriptions } = await supabase
     .from('subscriptions')
@@ -16,7 +17,12 @@ export default async function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-white">Subscriptions</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-display font-bold text-white">Subscriptions</h1>
+        <a href={stripeUrl} target="_blank" rel="noreferrer" className="text-sm bg-vault-primary text-white px-4 py-2 rounded-xl hover:opacity-90">
+          Open Stripe Dashboard
+        </a>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[

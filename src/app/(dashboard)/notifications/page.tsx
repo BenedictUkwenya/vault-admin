@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
+import { adminApi } from '@/lib/api-client';
 import { Send, Users, Crown, Building2 } from 'lucide-react';
 
 type Segment = 'all' | 'paid' | 'free' | 'business';
@@ -33,9 +34,18 @@ export default function NotificationsPage() {
 
     const { data: users } = await query;
     if (users && users.length > 0) {
-      const rows = users.map((u) => ({ user_id: u.id, title, body, type: 'system' as const }));
-      for (let i = 0; i < rows.length; i += 500) {
-        await supabase.from('notifications').insert(rows.slice(i, i + 500));
+      try {
+        await adminApi.broadcastNotification({
+          title,
+          body,
+          type: 'system',
+          user_ids: users.map((u) => u.id),
+        } as { title: string; body: string; type?: string; user_ids?: string[] });
+      } catch {
+        const rows = users.map((u) => ({ user_id: u.id, title, body, type: 'system' as const }));
+        for (let i = 0; i < rows.length; i += 500) {
+          await supabase.from('notifications').insert(rows.slice(i, i + 500));
+        }
       }
       setResult(`✅ Sent to ${users.length} ${segment === 'all' ? 'users' : segment + ' users'}`);
     } else {

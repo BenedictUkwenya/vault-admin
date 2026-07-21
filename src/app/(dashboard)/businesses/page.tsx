@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
+import { adminApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
-import { CheckCircle, XCircle, Building2, BadgeCheck, X, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, Building2, BadgeCheck, X, ExternalLink, Star } from 'lucide-react';
 
 interface Business {
   id: string;
@@ -20,6 +21,7 @@ interface Business {
   cover_image_url: string;
   is_approved: boolean;
   is_verified: boolean;
+  is_featured?: boolean;
   total_deals_count: number;
   active_deals_count: number;
   total_views: number;
@@ -35,6 +37,8 @@ export default function BusinessesPage() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Business | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => { fetchBusinesses(); }, [filter]);
 
@@ -49,18 +53,42 @@ export default function BusinessesPage() {
   }
 
   async function approve(id: string) {
-    await supabase.from('businesses').update({ is_approved: true }).eq('id', id);
-    fetchBusinesses();
-    if (selectedBusiness?.id === id) setSelectedBusiness(prev => prev ? { ...prev, is_approved: true } : null);
+    setActionError('');
+    setActionLoading(id);
+    try {
+      await adminApi.approveBusiness(id);
+      await fetchBusinesses();
+      if (selectedBusiness?.id === id) setSelectedBusiness((prev) => (prev ? { ...prev, is_approved: true } : null));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to approve business');
+    } finally {
+      setActionLoading(null);
+    }
   }
 
   async function confirmReject() {
     if (!rejectTarget) return;
-    await supabase.from('businesses').update({ is_approved: false, rejection_reason: rejectReason }).eq('id', rejectTarget.id);
-    setRejectTarget(null);
-    setRejectReason('');
+    setActionError('');
+    setActionLoading(rejectTarget.id);
+    try {
+      await adminApi.rejectBusiness(rejectTarget.id, rejectReason);
+      setRejectTarget(null);
+      setRejectReason('');
+      await fetchBusinesses();
+      if (selectedBusiness?.id === rejectTarget.id) setSelectedBusiness((prev) => (prev ? { ...prev, is_approved: false } : null));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to reject business');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function toggleFeatured(id: string, current: boolean) {
+    try { await adminApi.toggleFeatured(id, !current); } catch {
+      await supabase.from('businesses').update({ is_featured: !current }).eq('id', id);
+    }
     fetchBusinesses();
-    if (selectedBusiness?.id === rejectTarget.id) setSelectedBusiness(prev => prev ? { ...prev, is_approved: false } : null);
+    if (selectedBusiness?.id === id) setSelectedBusiness(prev => prev ? { ...prev, is_featured: !current } : null);
   }
 
   async function toggleVerified(id: string, current: boolean) {
@@ -82,6 +110,12 @@ export default function BusinessesPage() {
           ))}
         </div>
       </div>
+
+      {actionError && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {actionError}
+        </div>
+      )}
 
       <div className="bg-vault-card rounded-2xl border border-vault-border overflow-hidden">
         <div className="overflow-x-auto">
@@ -137,7 +171,7 @@ export default function BusinessesPage() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1.5">
                       {!b.is_approved && (
-                        <button onClick={() => approve(b.id)} className="p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors" title="Approve">
+                        <button onClick={() => approve(b.id)} disabled={actionLoading === b.id} className="p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50" title="Approve">
                           <CheckCircle className="w-4 h-4" />
                         </button>
                       )}
@@ -148,6 +182,11 @@ export default function BusinessesPage() {
                         className={`p-1.5 rounded-lg transition-colors ${b.is_verified ? 'bg-vault-primary/20 text-vault-primary hover:bg-vault-primary/30' : 'bg-vault-elevated text-vault-textHint hover:text-white'}`}
                         title={b.is_verified ? 'Remove verified badge' : 'Mark as verified'}>
                         <BadgeCheck className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => toggleFeatured(b.id, !!b.is_featured)}
+                        className={`p-1.5 rounded-lg transition-colors ${b.is_featured ? 'bg-yellow-500/20 text-yellow-400' : 'bg-vault-elevated text-vault-textHint hover:text-white'}`}
+                        title={b.is_featured ? 'Remove featured' : 'Feature business'}>
+                        <Star className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
+import { adminApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { Search, Crown, UserCog, X } from 'lucide-react';
 
@@ -46,20 +47,32 @@ export default function UsersPage() {
   }
 
   async function toggleBan(userId: string, banned: boolean) {
-    await supabase.from('profiles').update({ is_banned: !banned }).eq('id', userId);
+    try {
+      await adminApi.updateUser(userId, { is_banned: !banned });
+    } catch {
+      await supabase.from('profiles').update({ is_banned: !banned }).eq('id', userId);
+    }
     fetchUsers();
   }
 
   async function upgradeTier(userId: string, current: string) {
     const newTier = current === 'paid' ? 'free' : 'paid';
     const expires = newTier === 'paid' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
-    await supabase.from('profiles').update({ membership_tier: newTier, membership_expires_at: expires }).eq('id', userId);
+    try {
+      await adminApi.updateUser(userId, { membership_tier: newTier, membership_expires_at: expires });
+    } catch {
+      await supabase.from('profiles').update({ membership_tier: newTier, membership_expires_at: expires }).eq('id', userId);
+    }
     fetchUsers();
     if (selectedUser?.id === userId) setSelectedUser(prev => prev ? { ...prev, membership_tier: newTier } : null);
   }
 
   async function changeRole(userId: string, newRole: string) {
-    await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    try {
+      await adminApi.updateUser(userId, { role: newRole });
+    } catch {
+      await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    }
     fetchUsers();
     if (selectedUser?.id === userId) setSelectedUser(prev => prev ? { ...prev, role: newRole } : null);
   }
