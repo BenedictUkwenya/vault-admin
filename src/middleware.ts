@@ -10,6 +10,7 @@ const portalHomeByRole: Record<string, string> = {
 };
 
 const portalRoles = ['admin', 'business', 'user', 'ambassador'];
+const publicPaths = new Set(['/login', '/privacy', '/support']);
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -42,7 +43,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    if (pathname === '/login') return response;
+    if (publicPaths.has(pathname)) return response;
 
     const url = request.nextUrl.clone();
     url.pathname = '/login';

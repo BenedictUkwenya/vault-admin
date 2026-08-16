@@ -19,12 +19,23 @@ type MediaPost = {
   sort_order: number;
 };
 
-const emptyForm = {
+type MediaForm = {
+  title: string;
+  caption: string;
+  thumbnail_url: string;
+  video_url: string;
+  video_provider: MediaPost['video_provider'];
+  platforms_text: string;
+  is_published: boolean;
+  sort_order: number;
+};
+
+const emptyForm: MediaForm = {
   title: '',
   caption: '',
   thumbnail_url: '',
   video_url: '',
-  video_provider: 'youtube' as const,
+  video_provider: 'youtube',
   platforms_text: '',
   is_published: true,
   sort_order: 0,
@@ -53,7 +64,7 @@ export default function MediaAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<MediaForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
