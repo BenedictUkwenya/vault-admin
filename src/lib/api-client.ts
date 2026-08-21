@@ -44,6 +44,45 @@ export const adminApi = {
     apiFetch(`/admin/businesses/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ is_featured }) }),
   broadcastNotification: (body: { title: string; body: string; type?: string; user_ids?: string[] }) =>
     apiFetch('/admin/notifications/broadcast', { method: 'POST', body: JSON.stringify(body) }),
+  listNetworkApplications: (status?: string) =>
+    apiFetch<{ applications: NetworkApplication[]; total: number }>(
+      `/network/applications${status ? `?status=${encodeURIComponent(status)}` : ''}`
+    ),
+  approveNetworkApplication: (
+    id: string,
+    body?: { membership_tier?: string; notes?: string; comp_membership?: boolean }
+  ) =>
+    apiFetch(`/network/applications/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(body || {}),
+    }),
+  rejectNetworkApplication: (id: string, notes?: string) =>
+    apiFetch(`/network/applications/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+};
+
+export type NetworkApplication = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  business_description: string | null;
+  is_student: boolean;
+  membership_interest: string;
+  hear_about: string;
+  applicant_type: 'member' | 'partner';
+  status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'contacted';
+  notes: string | null;
+  source_page: string | null;
+  granted_tier?: string | null;
+  invited_user_id?: string | null;
+  invited_at?: string | null;
+  invite_error?: string | null;
+  created_at: string;
+  updated_at?: string;
 };
 
 export const partnerApi = {

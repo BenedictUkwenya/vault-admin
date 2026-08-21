@@ -7,6 +7,7 @@ import {
   Film,
   Gift,
   GitBranch,
+  Inbox,
   LayoutDashboard,
   Layers,
   MapPin,
@@ -51,6 +52,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
     nav: [
       { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { href: '/admin/users', icon: Users, label: 'Users' },
+      { href: '/admin/network', icon: Inbox, label: 'Network' },
       { href: '/admin/businesses', icon: Building2, label: 'Businesses' },
       { href: '/admin/deals', icon: Tag, label: 'Deals' },
       { href: '/admin/bookings', icon: BookOpen, label: 'Bookings' },
