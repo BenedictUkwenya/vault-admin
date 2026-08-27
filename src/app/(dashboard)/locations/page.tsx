@@ -39,19 +39,36 @@ export default function LocationsPage() {
   }
 
   async function toggleLaunch(id: string, is_launched: boolean) {
+    const msg = is_launched
+      ? 'Mark this market as coming soon? City filtering will stop for members.'
+      : 'Launch this market? Waitlisted members will receive an in-app notification.';
+    if (!confirm(msg)) return;
     await apiFetch(`/admin/locations/${id}`, { method: 'PATCH', body: JSON.stringify({ is_launched: !is_launched }) });
     load();
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-white">Markets & Locations</h1>
+      <div>
+        <h1 className="text-2xl font-display font-bold text-white">Markets & city rollout</h1>
+        <p className="text-vault-textSecondary text-sm mt-2 max-w-2xl leading-relaxed">
+          Markets are cities where Black Limitless launches. Add a market in <strong className="text-white">Coming soon</strong> mode so
+          members can join the waitlist in the app. When you <strong className="text-white">Launch</strong>, waitlisted members are notified
+          and Home/Explore show deals and businesses filtered to that city.
+        </p>
+      </div>
+
+      <div className="bg-vault-card border border-vault-border rounded-2xl p-4 text-sm text-vault-textSecondary space-y-2">
+        <p><span className="text-yellow-400 font-medium">Coming soon</span> — waitlist open; no city filtering yet.</p>
+        <p><span className="text-green-400 font-medium">Launched</span> — live market; members with this city see local deals.</p>
+        <p>Waitlist counts sync automatically when members join from Profile → City rollout.</p>
+      </div>
 
       <form onSubmit={addMarket} className="bg-vault-card border border-vault-border rounded-2xl p-4 flex flex-wrap gap-3">
-        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Market name" className="flex-1 min-w-[140px] bg-vault-surface border border-vault-border rounded-xl px-3 py-2 text-white text-sm" required />
+        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Market name (e.g. NY Trial)" className="flex-1 min-w-[140px] bg-vault-surface border border-vault-border rounded-xl px-3 py-2 text-white text-sm" required />
         <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="flex-1 min-w-[120px] bg-vault-surface border border-vault-border rounded-xl px-3 py-2 text-white text-sm" required />
         <input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="w-24 bg-vault-surface border border-vault-border rounded-xl px-3 py-2 text-white text-sm" />
-        <button type="submit" className="bg-vault-primary text-white px-4 py-2 rounded-xl text-sm font-medium">Add Market</button>
+        <button type="submit" className="bg-vault-primary text-white px-4 py-2 rounded-xl text-sm font-medium">Add market (waitlist)</button>
       </form>
 
       <div className="bg-vault-card border border-vault-border rounded-2xl overflow-hidden">
@@ -69,12 +86,12 @@ export default function LocationsPage() {
             {loading ? (
               <tr><td colSpan={5} className="px-4 py-8 text-center text-vault-textSecondary">Loading…</td></tr>
             ) : markets.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-vault-textSecondary">No markets yet. Add your first launch city.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-vault-textSecondary">No markets yet. Add your first city — it starts in waitlist mode.</td></tr>
             ) : markets.map((m) => (
               <tr key={m.id}>
                 <td className="px-4 py-3 text-white">{m.name}</td>
                 <td className="px-4 py-3 text-vault-textSecondary">{m.city}{m.state ? `, ${m.state}` : ''}</td>
-                <td className="px-4 py-3 text-vault-textSecondary">{m.waitlist_count}</td>
+                <td className="px-4 py-3 text-vault-textSecondary">{m.waitlist_count} member{m.waitlist_count === 1 ? '' : 's'}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs ${m.is_launched ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                     {m.is_launched ? 'Launched' : 'Coming soon'}
